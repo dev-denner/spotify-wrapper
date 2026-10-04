@@ -1,21 +1,16 @@
 {
-    "extends": "airbnb-base",
-    "plugins": [
-        "import"
-    ],
-    "rules": {
-        "linebreak-style": [
-            "error",
-            "windows"
-        ]
-    },
+  "extends": "airbnb-base",
+  "plugins": [
+    "import"
+  ],
+  "rules": {
     "import/no-extraneous-dependencies": [
-        "error",
-        {
-            "devDependencies": [
-                "**/*.test.ts",
-                "**/*.test.tsx"
-            ]
-        }
+      "error",
+      {
+        "devDependencies": [
+          "tests/**/*.js"
+        ]
+      }
     ]
+  }
 }
