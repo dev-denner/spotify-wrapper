@@ -97,14 +97,19 @@ const parseErrorBody = response => (
     : Promise.resolve(null)
 );
 
-export class SpotifyApiError extends Error {
-  constructor(message, status, body) {
-    super(message);
-    this.name = 'SpotifyApiError';
-    this.status = status;
-    this.body = body;
+export function SpotifyApiError(message, status, body) {
+  this.name = 'SpotifyApiError';
+  this.message = message;
+  this.status = status;
+  this.body = body;
+
+  if (Error.captureStackTrace) {
+    Error.captureStackTrace(this, SpotifyApiError);
   }
 }
+
+SpotifyApiError.prototype = Object.create(Error.prototype);
+SpotifyApiError.prototype.constructor = SpotifyApiError;
 
 export const search = (query, types, options = {}) => {
   const accessToken = ensureString(options.accessToken, 'accessToken');
