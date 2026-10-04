@@ -2,14 +2,12 @@
 
 # Spotify Wrapper
 
-**A small JavaScript client for the Spotify Web API, built as a library with tests, linting and coverage.**
+**A small TypeScript client for Spotify Web API search, focused on a typed API, runtime validation and isolated tests.**
 
-![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=111)
-![Mocha](https://img.shields.io/badge/Mocha-8D6748?logo=mocha&logoColor=white)
-![NYC Coverage](https://img.shields.io/badge/Coverage-NYC-informational)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
+![Vitest](https://img.shields.io/badge/Vitest-6E9F18?logo=vitest&logoColor=white)
+![ESLint](https://img.shields.io/badge/ESLint-4B32C3?logo=eslint&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green)
-
-[![Coverage Status](https://coveralls.io/repos/github/dev-denner/spotify-wrapper/badge.svg?branch=master)](https://coveralls.io/github/dev-denner/spotify-wrapper?branch=master)
 
 </div>
 
@@ -17,77 +15,81 @@
 
 ## Overview
 
-Spotify Wrapper is a lightweight JavaScript library that encapsulates Spotify Web API search calls behind a small client surface.
+Spotify Wrapper is a lightweight **TypeScript** library that encapsulates Spotify Web API search calls behind a small typed client.
 
-The implementation focuses on the original scope of the repository:
+The project started as a JavaScript wrapper and was later modernized without changing its original purpose. The current implementation keeps the library intentionally small while using a modern toolchain and stricter contracts.
 
-- generic search across supported Spotify resource types;
+It provides:
+
+- typed generic search across Spotify resource types;
 - dedicated helpers for artists, albums, tracks and playlists;
 - Bearer token authentication;
-- market, pagination and external-audio search options;
-- consistent API error handling;
-- injectable `fetch` for deterministic tests and non-browser environments.
+- market and pagination options;
+- Spotify API error handling;
+- injectable `fetch` for isolated tests;
+- generated TypeScript declarations for consumers;
+- runtime validation for JavaScript consumers and external input.
+
+## Installation
+
+```bash
+npm install
+```
 
 ## Usage
 
-### Create a reusable client
+### Reusable client
 
-```js
+```ts
 import { createClient } from 'spotify-wrapper';
 
-const spotify = createClient(process.env.SPOTIFY_ACCESS_TOKEN);
+const spotify = createClient(process.env.SPOTIFY_ACCESS_TOKEN!);
 
-spotify.searchArtists('Miles Davis', {
+const result = await spotify.searchArtists('Miles Davis', {
   market: 'BR',
   limit: 5,
-}).then((result) => {
-  console.log(result.artists.items);
 });
+
+console.log(result.artists?.items);
 ```
 
-### Search directly
+### Standalone helper
 
-```js
+```ts
 import { searchTracks } from 'spotify-wrapper';
 
-searchTracks('Doxy', {
-  accessToken: process.env.SPOTIFY_ACCESS_TOKEN,
+const result = await searchTracks('Doxy', {
+  accessToken: process.env.SPOTIFY_ACCESS_TOKEN!,
   market: 'BR',
-}).then((result) => {
-  console.log(result.tracks.items);
 });
+
+console.log(result.tracks?.items);
 ```
 
 ### Generic search
 
-```js
+```ts
 import { search } from 'spotify-wrapper';
 
-search('Kind of Blue', ['album', 'track'], {
-  accessToken: process.env.SPOTIFY_ACCESS_TOKEN,
+const result = await search('Kind of Blue', ['album', 'track'], {
+  accessToken: process.env.SPOTIFY_ACCESS_TOKEN!,
   limit: 10,
-}).then((result) => {
-  console.log(result);
 });
+
+console.log(result);
 ```
 
-The generic search supports Spotify's current search types:
+The generic search accepts:
 
 `album` · `artist` · `playlist` · `track` · `show` · `episode` · `audiobook`
+
+Because `SearchType` is a TypeScript union, invalid resource types are rejected by the compiler. Runtime validation is still preserved for JavaScript consumers and untyped external input.
 
 ## API
 
 ### `createClient(accessToken, defaultOptions?)`
 
 Creates a client that reuses an access token and optional defaults.
-
-```js
-const spotify = createClient(token, {
-  market: 'BR',
-  limit: 5,
-  fetch: customFetch,
-});
-```
 
 The returned client exposes:
 
@@ -101,109 +103,104 @@ The returned client exposes:
 
 | Option | Description |
 | --- | --- |
-| `accessToken` | Spotify OAuth access token. Required when using the standalone functions. |
+| `accessToken` | Spotify OAuth access token. Required by standalone functions. |
 | `market` | Two-letter ISO country code such as `BR` or `US`. |
-| `limit` | Results per resource type. Current Spotify search maximum: `10`. |
+| `limit` | Results per resource type, from `1` to `10`. |
 | `offset` | Pagination offset from `0` to `1000`. |
-| `includeExternal` | Set to `audio` to include externally hosted playable audio. |
-| `fetch` | Optional Fetch API-compatible implementation, useful for Node.js/polyfills and tests. |
+| `includeExternal` | `audio` when externally hosted playable audio should be included. |
+| `fetch` | Optional Fetch API-compatible function for testing or custom runtimes. |
 
 ## Error handling
 
-Non-successful Spotify responses reject with `SpotifyApiError`, preserving the HTTP status and Spotify response body.
+Spotify HTTP failures throw `SpotifyApiError`, preserving the status code and parsed response body.
 
-```js
+```ts
 import { SpotifyApiError, searchAlbums } from 'spotify-wrapper';
 
-searchAlbums('Blue', {
-  accessToken: token,
-}).catch((error) => {
+try {
+  await searchAlbums('Blue', {
+    accessToken: token,
+  });
+} catch (error) {
   if (error instanceof SpotifyApiError) {
     console.error(error.status, error.message);
   }
-});
+}
 ```
 
-Input is validated before the HTTP request. Invalid resource types, market codes, limits and offsets fail early instead of sending malformed requests.
+## TypeScript
+
+The public API exports types including:
+
+- `SearchType`
+- `SearchOptions`
+- `ClientSearchOptions`
+- `SpotifyClient`
+- `SpotifyPaging`
+- `SpotifySearchResponse`
+- `FetchLike`
+
+The build emits JavaScript, declaration files and source maps to `dist/`.
 
 ## Engineering practices
 
-- test suite with **Mocha + Chai**;
-- mocks/stubs with **Sinon**;
-- coverage through **NYC** and Coveralls;
-- linting based on ESLint;
-- Babel build step;
-- injected HTTP dependency for isolated tests;
-- Git pre-push quality check;
-- MIT licensed library structure.
+- strict **TypeScript** configuration;
+- **Vitest** for automated tests and mocking;
+- V8 coverage support;
+- **ESLint** flat configuration with typescript-eslint;
+- zero runtime dependencies;
+- injected HTTP dependency for deterministic tests;
+- CI quality gate covering lint, typecheck, tests and build;
+- ESM package exports with generated declarations.
 
 ## Project structure
 
 ```text
 .
 ├── src/
-│   └── main.js
+│   └── index.ts
 ├── tests/
-│   └── main.spec.js
-├── .babelrc
-├── .eslintrc.json
+│   └── index.spec.ts
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+├── eslint.config.mjs
+├── tsconfig.json
 ├── CONTRIBUTING.md
 └── package.json
 ```
 
 ## Requirements
 
-The client relies on the Fetch API. Modern browsers and recent Node.js versions provide it natively. Other environments can pass a compatible implementation through `options.fetch`.
+- Node.js 20 or newer for development;
+- a Spotify access token for real API calls.
 
-A Spotify access token must be obtained separately. This library intentionally does not implement the OAuth authorization flow.
+The library uses the Fetch API available in modern runtimes. A compatible implementation can also be injected through `options.fetch`.
+
+OAuth authorization itself is intentionally outside the scope of this package.
 
 ## Development
 
-Install dependencies:
-
 ```bash
 npm install
+npm run check
 ```
 
-Run tests:
-
-```bash
-npm test
-```
-
-Run tests with coverage:
-
-```bash
-npm run test:coverage
-```
-
-Lint:
+Individual commands:
 
 ```bash
 npm run lint
-```
-
-Build:
-
-```bash
+npm run typecheck
+npm test
+npm run test:coverage
 npm run build
 ```
 
-The compiled package entry point is `lib/main.js`.
+## Modernization
 
-## Why it remains in my portfolio
+The repository originally used Babel 6, Mocha, Chai, Sinon and an older ESLint setup. The current version replaces that toolchain with TypeScript, Vitest and modern ESLint while preserving the original API-client concept.
 
-This is a historical project that I completed around its original API-client idea instead of replacing it with a different application. Its dependency versions reflect the period in which the repository was started and are not intended as current dependency recommendations.
-
-It demonstrates:
-
-- HTTP API-client design;
-- input and API-error handling;
-- dependency injection;
-- automated testing and mocking;
-- coverage and linting discipline;
-- packaging/build concerns;
-- maintaining a reusable library rather than only application code.
+This keeps the repository useful as both a working library and an example of incremental modernization: preserve the domain and public intent, replace obsolete infrastructure, strengthen contracts, and verify behavior through tests.
 
 ## License
 
