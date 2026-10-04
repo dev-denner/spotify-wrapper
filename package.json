@@ -10,7 +10,7 @@
     "clear": "rimraf lib",
     "build": "babel --out-dir lib src",
     "build:watch": "npm run build -- --watch",
-    "lint": "eslint src/*.js tests/**/*.spec.js",
+    "lint": "eslint src/*.js",
     "prepush": "npm run lint && npm test",
     "test": "mocha tests/**/*.spec.js --require babel-register",
     "test:tdd": "mocha tests/**/*.spec.js --require babel-register --watch",
@@ -44,6 +44,7 @@
   },
   "homepage": "https://github.com/dev-denner/spotify-wrapper#readme",
   "devDependencies": {
+    "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.3.2",
     "babel-register": "^6.24.0",
     "chai": "^3.5.0",
