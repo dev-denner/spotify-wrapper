@@ -4,6 +4,10 @@
     "import"
   ],
   "rules": {
+    "max-len": [
+      "error",
+      120
+    ],
     "import/no-extraneous-dependencies": [
       "error",
       {
