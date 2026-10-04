@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
-  SpotifyApiError,
   createClient,
   search,
   searchAlbums,
@@ -8,6 +7,7 @@ import {
   searchPlaylists,
   searchTracks,
   type FetchLike,
+  type SpotifyApiError,
 } from '../src/index.js';
 
 const jsonResponse = (body: unknown, init: ResponseInit = {}): Response =>
